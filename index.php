@@ -48,12 +48,13 @@ unset($_SESSION['flash'], $_SESSION['errors']);
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Sistem Rental Peralatan Dapur</title>
-<link rel="stylesheet" href="style.css" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Sistem Rental Peralatan Dapur</title>
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+
 <header class="topbar">
     <div class="brand">
         <div class="logo"></div>
@@ -65,14 +66,16 @@ unset($_SESSION['flash'], $_SESSION['errors']);
 </header>
 
 <main class="wrap">
+
     <?php if ($flash): ?>
         <div class="notice"><?= htmlspecialchars($flash) ?></div>
     <?php endif; ?>
 
-    <div class="grid">
+    <!-- GRID 2 KOLOM -->
+    <div class="grid-two">
 
-        <!-- KIRI: FORM CUSTOMER -->
-        <section class="card left">
+        <!-- FORM -->
+        <section class="card half">
             <h2>Pilih item & ajukan sewa (Customer)</h2>
 
             <?php if ($errors): ?>
@@ -83,9 +86,10 @@ unset($_SESSION['flash'], $_SESSION['errors']);
                 </div>
             <?php endif; ?>
 
-            <form action="process.php" method="POST" class="form">
+            <form action="process.php?redir=antrian" method="POST" class="form">
+
                 <label>Nama Pemesan</label>
-                <input type="text" name="nama" placeholder="Nama lengkap" required>
+                <input type="text" name="nama" required placeholder="Nama lengkap">
 
                 <label>No HP (opsional)</label>
                 <input type="text" name="hp" placeholder="08xxxx">
@@ -94,51 +98,30 @@ unset($_SESSION['flash'], $_SESSION['errors']);
                 <select name="alat" required>
                     <option value="">-- Pilih alat --</option>
                     <?php foreach ($inventory as $it): 
-                        // label yang tampil di dropdown
-                        $optLabel = htmlspecialchars($it['name'] . " — Rp" . number_format($it['price']) . " — Stok: " . $it['stock']);
+                        $opt = $it['name'] . " — Rp" . number_format($it['price']) . " — Stok: " . $it['stock'];
                     ?>
-                        <option value="<?= $it['id'] ?>"><?= $optLabel ?></option>
+                        <option value="<?= $it['id'] ?>"><?= htmlspecialchars($opt) ?></option>
                     <?php endforeach; ?>
                 </select>
 
                 <div class="two">
                     <div>
                         <label>Jumlah</label>
-                        <input type="number" name="jumlah" min="1" value="1" required>
+                        <input type="number" min="1" name="jumlah" value="1" required>
                     </div>
                     <div>
-                        <label>Durasi sewa (hari)</label>
-                        <input type="number" name="durasi" min="1" value="1" required>
+                        <label>Durasi (hari)</label>
+                        <input type="number" min="1" name="durasi" value="1" required>
                     </div>
                 </div>
 
                 <button class="cta">Ajukan Sewa</button>
+
             </form>
         </section>
 
-        <!-- PANEL KANAN -->
-        <aside class="card right">
-            <div class="right-head">
-                <h3>Antrian Permintaan</h3>
-                <form action="process.php" method="POST" style="display:inline">
-                    <input type="hidden" name="action" value="clear_history">
-                    <button class="btn-small">Bersihkan Riwayat</button>
-                </form>
-            </div>
-
-            <!-- daftar permintaan dalam queue -->
-            <?php foreach ($queueItems as $q): ?>
-                <div class="item">
-                    <div class="name"><?= htmlspecialchars($q->customer) ?></div>
-                    <div class="meta">
-                        Item ID: <?= htmlspecialchars($q->item_id) ?> |
-                        Durasi: <?= htmlspecialchars($q->duration) ?> hari |
-                        Status: <?= htmlspecialchars($q->status) ?>
-                    </div>
-                    <div class="time">Waktu request: <?= htmlspecialchars($q->time) ?></div>
-                </div>
-            <?php endforeach; ?>
-
+        <!-- INVENTORY -->
+        <section class="card half">
             <h3>Inventory</h3>
             <div class="box inv">
                 <?php foreach ($inventory as $it): ?>
@@ -149,59 +132,49 @@ unset($_SESSION['flash'], $_SESSION['errors']);
                     </div>
                 <?php endforeach; ?>
             </div>
+        </section>
 
-            <h3>Pesanan Terproses</h3>
-            <div class="box proc">
-                <?php if (count($processedItems) === 0): ?>
-                    <div class="empty">Belum ada pesanan diproses.</div>
-                <?php else: ?>
-                    <?php foreach ($processedItems as $p): ?>
-                        <div class="item processed">
-                            <div class="name">
-                                <?= htmlspecialchars($p->customer) ?>
-                                <span class="badge">processed</span>
-                            </div>
-                            <div class="meta">
-                                Item ID: <?= htmlspecialchars($p->item_id) ?> |
-                                Durasi: <?= htmlspecialchars($p->duration) ?> hari
-                            </div>
-                            <div class="time"><?= htmlspecialchars($p->time) ?></div>
-                        </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
+    </div> <!-- END GRID-TWO -->
+
+    <!-- KATALOG -->
+    <section class="card" style="margin-top: 26px;">
+        <h2>Katalog Peralatan</h2>
+
+        <div class="katalog-row">
+
+            <div class="katalog-item">
+                <img src="kompor.jpg" class="katalog-img">
+                <div class="katalog-name">Kompor Portable Gas</div>
             </div>
-        </aside>
-    </div>
 
-    <!-- Riwayat Approve (Stack - LIFO) -->
-    <h3>Riwayat Approve</h3>
-    <div class="box proc">
-        <?php if (count($stackItems) === 0): ?>
-            <div class="empty">Belum ada riwayat approve.</div>
-        <?php else: ?>
-            <?php 
-            // LIFO → tampilkan dari paling akhir (dibalik)
-            $stackItems = array_reverse($stackItems);
-            ?>
-            <?php foreach ($stackItems as $s): ?>
-                <div class="item processed">
-                    <div class="name">
-                        <?= htmlspecialchars($s->customer) ?>
-                        <span class="badge">LIFO</span>
-                    </div>
+            <div class="katalog-item">
+                <img src="wajan.jpg" class="katalog-img">
+                <div class="katalog-name">Wajan Besar</div>
+            </div>
 
-                    <div class="meta">
-                        Item ID: <?= htmlspecialchars($s->item_id) ?> |
-                        Durasi: <?= htmlspecialchars($s->duration) ?> hari
-                    </div>
+            <div class="katalog-item">
+                <img src="ricecooker.png" class="katalog-img">
+                <div class="katalog-name">Rice Cooker 5L</div>
+            </div>
 
-                    <div class="time">
-                        Approved pada: <?= htmlspecialchars($s->approved_time ?? '-') ?>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
-    </div>
+            <div class="katalog-item">
+                <img src="blender.jpg" class="katalog-img">
+                <div class="katalog-name">Blender</div>
+            </div>
+
+            <div class="katalog-item">
+                <img src="mixer.jpg" class="katalog-img">
+                <div class="katalog-name">Mixer</div>
+            </div>
+
+            <div class="katalog-item">
+                <img src="panci.jpeg" class="katalog-img">
+                <div class="katalog-name">Panci</div>
+            </div>
+
+        </div>
+    </section>
+</main>
 
 <footer class="foot">
     <div class="credit">TA Pemrograman Dasar • Universitas Diponegoro</div>
