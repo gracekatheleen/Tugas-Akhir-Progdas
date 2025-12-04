@@ -134,5 +134,9 @@ file_put_contents(
 $_SESSION['flash'] = "Pesanan diproses otomatis (FIFO) dan telah masuk ke daftar processed.";
 
 // Redirect kembali ke halaman utama
-header("Location: index.php");
+if (isset($_GET['redir']) && $_GET['redir'] === 'antrian') {
+    header("Location: antrian.php");
+} else {
+    header("Location: index.php");
+}
 exit;
