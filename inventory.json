@@ -1,0 +1,38 @@
+[
+    {
+        "id": 1,
+        "name": "Kompor Portable Gas",
+        "price": 50000,
+        "stock": 3
+    },
+    {
+        "id": 2,
+        "name": "Wajan Besar (chafing)",
+        "price": 30000,
+        "stock": 4
+    },
+    {
+        "id": 3,
+        "name": "Rice Cooker 5L",
+        "price": 18000,
+        "stock": 5
+    },
+    {
+        "id": 4,
+        "name": "Blender",
+        "price": 15000,
+        "stock": 6
+    },
+    {
+        "id": 5,
+        "name": "Mixer",
+        "price": 12000,
+        "stock": 2
+    },
+    {
+        "id": 6,
+        "name": "Panci",
+        "price": 8000,
+        "stock": 8
+    }
+]
