@@ -1,7 +1,7 @@
 <?php
 // index.php - UI + membaca file queue/processed + menampilkan notifikasi
 session_start();
-
+// MODUL 1: VARIABEL, TIPE DATA, DAN ARRAY
 // file-file yang digunakan
 $queueFile = __DIR__ . '/queue.txt';
 $processedFile = __DIR__ . '/processed.txt';
@@ -12,6 +12,7 @@ $stackFile = __DIR__ . '/stack.txt';
 $stackRaw = trim(file_get_contents($stackFile));
 $stackItems = $stackRaw === "" ? [] : array_filter(array_map('json_decode', explode("\n", $stackRaw)));
 
+// MODUL 1 DAN MODUL 2: VARIABEL, TIPE DATA, DAN ARRAY, DAN PENGKONDISIAN
 // memastikan file-file ada
 if (!file_exists($queueFile)) file_put_contents($queueFile, "");
 if (!file_exists($processedFile)) file_put_contents($processedFile, "");
@@ -173,6 +174,26 @@ unset($_SESSION['flash'], $_SESSION['errors']);
             </div>
 
         </div>
+    </section>
+
+    <!-- FORM PENGEMBALIAN -->
+    <section class="card" style="margin-top: 26px;">
+        <h2>Ajukan Pengembalian (Customer)</h2>
+
+        <form action="process.php?redir=return" method="POST" class="form">
+
+            <label>Nama Pemesan</label>
+            <input type="text" name="nama" required placeholder="Nama lengkap">
+
+            <label>ID Pesanan</label>
+            <input type="text" name="order_id" required placeholder="Masukkan ID Pesanan">
+
+            <label>Jumlah yang Dikembalikan</label>
+            <input type="number" min="1" name="jumlah" value="1" required>
+
+            <button class="cta">Ajukan Pengembalian</button>
+
+        </form>
     </section>
 </main>
 
