@@ -5,14 +5,13 @@ session_start();
 $queueFile     = __DIR__ . '/queue.txt';
 $processedFile = __DIR__ . '/processed.txt';
 $inventoryFile = __DIR__ . '/inventory.json';
-$stackFile = __DIR__ . '/stack.txt';
+$stackFile     = __DIR__ . '/stack.txt';
 
 // Buat file jika belum ada
 if (!file_exists($queueFile)) file_put_contents($queueFile, "");
 if (!file_exists($processedFile)) file_put_contents($processedFile, "");
 if (!file_exists($stackFile)) file_put_contents($stackFile, "");
-
-if (!file_exists($inventoryFile)) {   // MODUL 1: VARIABEL, TIPE DATA, DAN ARRAY
+if (!file_exists($inventoryFile)) { 
     $defaultInventory = [
         ["id"=>1,"name"=>"Kompor Portable Gas","price"=>50000,"stock"=>3],
         ["id"=>2,"name"=>"Wajan Besar (chafing)","price"=>30000,"stock"=>4],
@@ -24,7 +23,7 @@ if (!file_exists($inventoryFile)) {   // MODUL 1: VARIABEL, TIPE DATA, DAN ARRAY
     file_put_contents($inventoryFile, json_encode($defaultInventory, JSON_PRETTY_PRINT));
 }
 
-// CLEAR HISTORY - MODUL 2: PENGKONDISIAN
+// CLEAR HISTORY
 if (($_POST['action'] ?? '') === 'clear_history') {
     file_put_contents($queueFile, "");
     file_put_contents($processedFile, "");
@@ -33,7 +32,16 @@ if (($_POST['action'] ?? '') === 'clear_history') {
     exit;
 }
 
-// INPUT VALIDATION
+// PROSES PENGEMBALIAN TANPA VALIDASI (UNTUK DEMO NOTIFIKASI SAJA)
+if (isset($_GET['redir']) && $_GET['redir'] === 'return') {
+    $_SESSION['flash'] = "Pesanan berhasil dikembalikan.";
+
+    // Redirect kembali ke index.php
+    header("Location: index.php");
+    exit;
+}
+
+// INPUT VALIDATION SEWA
 $nama   = trim($_POST['nama']   ?? '');
 $hp     = trim($_POST['hp']     ?? '');
 $alatId = intval($_POST['alat'] ?? 0);
@@ -52,7 +60,7 @@ if (!empty($errors)) {
     exit;
 }
 
-// LOAD INVENTORY - MODUL 4: FUNCTION DAN METHOD
+// LOAD INVENTORY - CLASS
 class RentalItem {
     public int $id;
     public string $name;
@@ -69,7 +77,6 @@ class RentalItem {
 
 $inventory = json_decode(file_get_contents($inventoryFile), true);
 $found = null;
-
 foreach ($inventory as $it) {
     if (intval($it['id']) === $alatId) {
         $found = new RentalItem($it['id'], $it['name'], $it['price'], $it['stock']);
@@ -78,7 +85,7 @@ foreach ($inventory as $it) {
 }
 
 if (!$found) {
-    $_SESSION['errors'] = ["Peralatan tidak ditemukan."];
+    $_SESSION['errors'] = ["Pengembalian berhasil diproses."];
     header("Location: index.php");
     exit;
 }
@@ -107,8 +114,8 @@ $orderObj = (object)[
     'time'     => $timestamp,
     'status'   => 'processed'  // LANGSUNG PROCESSED
 ];
-// MODUL 7: STACK DAN QUEUE
-// MASUKKAN KE QUEUE (LOG FIFO)
+
+// MASUKKAN KE QUEUE (FIFO)
 file_put_contents($queueFile, json_encode($orderObj, JSON_UNESCAPED_UNICODE) . "\n", FILE_APPEND);
 
 // MASUKKAN KE PROCESSED
@@ -117,26 +124,24 @@ file_put_contents($processedFile, json_encode($orderObj, JSON_UNESCAPED_UNICODE)
 // TAMBAHKAN KE STACK (LIFO)
 file_put_contents($stackFile, json_encode($orderObj, JSON_UNESCAPED_UNICODE) . "\n", FILE_APPEND);
 
-// UPDATE STOK - MODUL 3: PERULANGAN
+// UPDATE STOK INVENTORY
 foreach ($inventory as &$it) {
     if (intval($it['id']) === $found->id) {
         $it['stock'] = max(0, $it['stock'] - $jumlah);
         break;
     }
 }
-
-file_put_contents(
-    $inventoryFile,
-    json_encode($inventory, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
-);
+file_put_contents($inventoryFile, json_encode($inventory, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
 // SUCCESS MESSAGE
 $_SESSION['flash'] = "Pesanan diproses otomatis (FIFO) dan telah masuk ke daftar processed.";
 
-// Redirect kembali ke halaman utama
+// Redirect
 if (isset($_GET['redir']) && $_GET['redir'] === 'antrian') {
     header("Location: antrian.php");
 } else {
     header("Location: index.php");
 }
 exit;
+
+
